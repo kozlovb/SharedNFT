@@ -2,20 +2,24 @@
 
 pragma solidity ^0.8.0;
 
+import './ISharedNFT.sol';
 import './SimpleAuction.sol';
+import "./ERC165.sol";
 
 //TODO removed once debugged
 // TODO styling _v class members 
 // local normal except constructor
 // camel notation
+// Create an interface ? 
+//TODO - sort out where real NFT is stored.
+//TODO think of interface to metadata 
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
  * the Metadata extension, but not including the Enumerable extension, which is available separately as
  * {ERC721Enumerable}.
  */
-contract SharedNFT {
+contract SharedNFT is ERC165 {
  
-
     // Token name
     string private _name;
 
@@ -42,19 +46,35 @@ contract SharedNFT {
     }
 
     /**
-     * @dev See {IERC721-ownerOf}.
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+        return
+            interfaceId == type(ISharedNFT).interfaceId ||
+            super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev Simil {IERC721-ownerOf}.
      */
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(tokenId >= 0);
         address payable [] memory ownersArray = _owners[tokenId];
         address owner = ownersArray[ownersArray.length - 1];
        
-        require(owner != address(0), "ERC721: owner query for nonexistent token");
+        require(owner != address(0), "SharedNFT: owner query for nonexistent token");
         return owner;
     }
-//import back IERC721Metadata ?
+
+    //todo test it, todo why calldata
+    function allOwners(uint256 tokenId) external view returns (address payable[] memory owners) {
+        require(tokenId >= 0);
+        address payable [] memory result  = _owners[tokenId];
+        return result;
+    }
+
     /**
-     * @dev See {IERC721Metadata-name}.
+     * @dev similar to metadata
      */
     function name() public view virtual returns (string memory) {
         return _name;
@@ -151,7 +171,7 @@ contract SharedNFT {
         //emit Transfer(owner, address(0), tokenId);
     }
 
-    function sell(uint256 tokenId) public {
+    function sell(uint256 tokenId, uint256 delayBlock) public {
          // require that it is the owner
          // price listener 
          // time has come seller can accept to sell 
@@ -163,26 +183,23 @@ contract SharedNFT {
          //create auction 
          //Auction can be an interface
          //TODO Allow here to set more than min by the seller.
-         address auction = address(new SimpleAuction(tokenId, address(this), _minDelayBlock));
+         delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
+         address auction = address(new SimpleAuction(tokenId, address(this), delayBlock));
          emit AuctionStarted(tokenId, auction);
          _auctionToTokens[auction] = tokenId;
     }
 
-
-    function transfer_to(address payable to) payable public {
+    function transferTo(address payable to) payable public {
         //better to create variable or to call one more ?
         //check for gas 
 
         uint token_id = _auctionToTokens[msg.sender];
-         _owners[token_id].push(to);
+        _owners[token_id].push(to);
         require(token_id >= 0);
         require(to != address(0x0));
         distribute(_owners[token_id], msg.value);
 
        _owners[token_id].push(to);
-        
-
-        //can be an interface
     } 
 
     function distribute(address payable[] memory owners, uint amount) private {
