@@ -20,11 +20,23 @@ function mineBlocks(numberOfBlocks) {
 contract('SharedNFT', (accounts) => {
 
     let sharedNFTInstance;
+    let NFTName = "MyNFT";
+    let NFTSymbol = "MNFT";
 
     beforeEach(async () => {
-      sharedNFTInstance = await sharedNFT.new("a", "b", 1);
+      sharedNFTInstance = await sharedNFT.new(NFTName, NFTSymbol, 1);
       console.log("Deployed contract to %s", sharedNFTInstance.address);
       await sharedNFTInstance.mint(accounts[0], 0);
+    });
+
+    it('Check NFT name', async () => {
+      NFTNameActual = await sharedNFTInstance.name();
+      assert.equal(NFTNameActual, NFTName, "NFT name is wrong");
+    });
+
+    it('Check NFT symbol', async () => {
+      NFTSymbolActual = await sharedNFTInstance.symbol();
+      assert.equal(NFTSymbolActual, NFTSymbol, "NFT symbol is wrong");
     });
 
     it('Minted token belongs to the authors account', async () => {
@@ -32,7 +44,7 @@ contract('SharedNFT', (accounts) => {
      assert.equal(owner, accounts[0], "Owner should be account that minted");
     });
 
-    it('An auction is organised', async () => {
+    it('Organise an Auction', async () => {
   
         let waitBlocks = 15;
 
@@ -53,12 +65,15 @@ contract('SharedNFT', (accounts) => {
         mineBlocks(waitBlocks - blockBeforeClose.number + blockAfterSell.number);
         let blockAfterWait = await web3.eth.getBlock("latest")
         console.log("blockAfterWait %s", blockAfterWait.number);
-        const gasEstimate = await simleAuctionInstance.close.estimateGas();
-        console.log("gasEstimate %s", gasEstimate);
-        //114291 - gas estimate
-        await debug(simleAuctionInstance.close());  //potentially 8th block
-        const owner = await sharedNFTInstance.ownerOf(0);
-        assert.equal(owner, accounts[1], "Owner should be account that baught");
-
+        await simleAuctionInstance.close();  //potentially 8th block
+        const PrimarilyOwner = await sharedNFTInstance.ownerOf(0);
+        assert.equal(PrimarilyOwner, accounts[1], "Owner should be account that baught");
+        const ownersActual = await sharedNFTInstance.allOwners(0);
+        const ownersExpected = [accounts[0], accounts[1]];
+        for (let i = 0; i < ownersExpected.length; ++i) {
+          assert.equal(ownersActual[i], ownersExpected[i], "Owner %s is set incorrectly");
+        };
     });
+
+
 });

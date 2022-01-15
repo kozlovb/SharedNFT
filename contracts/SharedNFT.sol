@@ -57,7 +57,7 @@ contract SharedNFT is ERC165 {
     }
 
     /**
-     * @dev 
+     * @dev Returns an owner that can initiate a sell auction.
      */
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(tokenId >= 0);
@@ -69,7 +69,9 @@ contract SharedNFT is ERC165 {
         return owner;
     }
 
-    //todo test it
+    /**
+     * @dev Returns a set of owners getting commision from every sell.
+     */
     function allOwners(uint256 tokenId) external view returns (address payable[] memory owners) {
         require(tokenId >= 0);
         address payable [] memory result  = _owners[tokenId];
@@ -77,14 +79,14 @@ contract SharedNFT is ERC165 {
     }
 
     /**
-     * @dev Inspired by IERC721Metadata.
+     * @dev Inspired by IERC721Metadata. Returns NFT name.
      */
     function name() public view virtual returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev Inspired by IERC721Metadata.
+     * @dev Inspired by IERC721Metadata. Returns an NFT symbol.
      */
     function symbol() public view virtual returns (string memory) {
         return _symbol;
