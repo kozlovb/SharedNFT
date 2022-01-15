@@ -1,6 +1,6 @@
 pragma solidity ^0.8.0;
 //TODO removed once debugged
-
+//TODO check for the interfce of 
 
 contract SimpleAuction {
 

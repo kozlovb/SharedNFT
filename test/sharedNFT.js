@@ -3,6 +3,11 @@ const SimpleAuction = artifacts.require("SimpleAuction");
 const truffleAssert = require('truffle-assertions');
 const util = require('util')
 
+const mine = async () => await web3.currentProvider.send({
+  jsonrpc: '2.0',
+  method: 'evm_mine',
+  id: new Date().getTime()
+}, function (error) {})
 
 function mineBlocks(numberOfBlocks) {
   if (numberOfBlocks <= 0 )
@@ -12,18 +17,15 @@ function mineBlocks(numberOfBlocks) {
   }
 }
 
-const mine = async () => await web3.currentProvider.send({
-  jsonrpc: '2.0',
-  method: 'evm_mine',
-  id: new Date().getTime()
-}, function (error) {})
-
 contract('SharedNFT', (accounts) => {
     it('should mint a token', async () => {
       const sharedNFTInstance = await sharedNFT.deployed();
       //{from: accounts[0]}
       await sharedNFTInstance.mint(accounts[0], 0);
+      gasOwnerOf = await sharedNFTInstance.ownerOf.estimateGas(0);
+      console.log("gasOwnerOf %s", gasOwnerOf);
       const owner = await sharedNFTInstance.ownerOf(0);
+     
       assert.equal(owner, accounts[0], "Owner should be account that minted");
     });
     it('Should sell a token', async () => {
@@ -46,7 +48,9 @@ contract('SharedNFT', (accounts) => {
         mineBlocks(waitBlocks - blockBeforeClose.number + blockAfterSell.number);
         let blockAfterWait = await web3.eth.getBlock("latest")
         console.log("blockAfterWait %s", blockAfterWait.number);
-       
+        const gasEstimate = await simleAuctionInstance.close.estimateGas();
+        console.log("gasEstimate %s", gasEstimate);
+        //114291 - gas estimate
         await debug(simleAuctionInstance.close());  //potentially 8th block
         const owner = await sharedNFTInstance.ownerOf(0);
         assert.equal(owner, accounts[1], "Owner should be account that baught");

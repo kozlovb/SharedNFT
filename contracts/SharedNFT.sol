@@ -5,6 +5,7 @@ pragma solidity ^0.8.0;
 import './ISharedNFT.sol';
 import './SimpleAuction.sol';
 import "./ERC165.sol";
+import "./openzeppelin/Strings.sol";
 
 //TODO removed once debugged
 // TODO styling _v class members 
@@ -35,6 +36,7 @@ contract SharedNFT is ERC165 {
     // Mapping owner address to token count
     //mapping(address => uint256) private _balances;
     event AuctionStarted(uint256 tokenId, address auctionContract);
+    event Transfer(address from, address to, uint tokenId);
     
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
@@ -55,18 +57,19 @@ contract SharedNFT is ERC165 {
     }
 
     /**
-     * @dev Simil {IERC721-ownerOf}.
+     * @dev 
      */
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(tokenId >= 0);
-        address payable [] memory ownersArray = _owners[tokenId];
+        
+        address payable [] storage ownersArray = _owners[tokenId];
         address owner = ownersArray[ownersArray.length - 1];
        
         require(owner != address(0), "SharedNFT: owner query for nonexistent token");
         return owner;
     }
 
-    //todo test it, todo why calldata
+    //todo test it
     function allOwners(uint256 tokenId) external view returns (address payable[] memory owners) {
         require(tokenId >= 0);
         address payable [] memory result  = _owners[tokenId];
@@ -74,27 +77,26 @@ contract SharedNFT is ERC165 {
     }
 
     /**
-     * @dev similar to metadata
+     * @dev Inspired by IERC721Metadata.
      */
     function name() public view virtual returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev See {IERC721Metadata-symbol}.
+     * @dev Inspired by IERC721Metadata.
      */
     function symbol() public view virtual returns (string memory) {
         return _symbol;
     }
 
     /**
-     * @dev See {IERC721Metadata-tokenURI}.
+     * @dev Inspired by IERC721Metadata.
      */
     function tokenURI(uint256 tokenId) public view virtual returns (string memory) {
-        require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
-       return ""; 
-       // string memory baseURI = _baseURI();
-       // return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, tokenId.toString())) : "";
+       require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+       string memory baseURI = _baseURI();
+       return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, Strings.toString(tokenId))) : "";
     }
 
     /**
@@ -109,36 +111,14 @@ contract SharedNFT is ERC165 {
     /**
      * @dev Returns whether `tokenId` exists.
      *
-     * Tokens start existing when they are minted (`_mint`),
-     * and stop existing when they are burned (`_burn`).
+     * Tokens start existing when they are minted (`_mint`).
      */
-     //TODO Impossible to know if having local reference is better then mapping
-     // Gas cost need to be checked.
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
-         address payable [] memory ownersArray = _owners[tokenId];
-        return ownersArray.length > 0 && ownersArray[ownersArray.length-1] != address(0);
-    }
-
-
-//TODO whats the concept behind safe mint.
-    /**
-     * @dev Safely mints `tokenId` and transfers it to `to`.
-     *
-     * Requirements:
-     *
-     * - `tokenId` must not exist.
-     * - If `to` refers to a smart contract, it must implement {IERC721Receiver-onERC721Received}, which is called upon a safe transfer.
-     *
-     * Emits a {Transfer} event.
-     */
-    function mint(address payable to, uint256 tokenId) public {
-        _mint(to, tokenId);
+        return _owners[tokenId].length > 0;
     }
 
     /**
      * @dev Mints `tokenId` and transfers it to `to`.
-     *
-     * WARNING: Usage of this method is discouraged, use {_safeMint} whenever possible
      *
      * Requirements:
      *
@@ -147,59 +127,57 @@ contract SharedNFT is ERC165 {
      *
      * Emits a {Transfer} event.
      */
-    function _mint(address payable to, uint256 tokenId) internal virtual {
+    function mint(address payable to, uint256 tokenId) public {
         require(to != address(0), "ERC721: mint to the zero address");
         require(!_exists(tokenId), "ERC721: token already minted");
         _owners[tokenId].push(to);
-
-        //emit Transfer(address(0), to, tokenId);
+        emit Transfer(address(0), to, tokenId);
     }
 
     /**
-     * @dev Destroys `tokenId`.
-     * The approval is cleared when the token is burned.
+     * @dev Creates an auction to sell `tokenId` and transfer it to `to`.
      *
      * Requirements:
      *
      * - `tokenId` must exist.
+     * - `delayBlock` cannot be less then a minimum set in a contract initially.
      *
-     * Emits a {Transfer} event.
      */
-    function _burn(uint256 tokenId) internal virtual {
-       // address owner = SharedNFT.ownerOf(tokenId);
-       // delete _owners[tokenId];
-        //emit Transfer(owner, address(0), tokenId);
-    }
-
+     //TOOD min price ?
     function sell(uint256 tokenId, uint256 delayBlock) public {
-         // require that it is the owner
-         // price listener 
-         // time has come seller can accept to sell 
-         // do an interface of this stuff ?
-         //The Psychedelic Furs
+
          if (_owners[tokenId].length > 0 ) {
             require(msg.sender == _owners[tokenId][_owners[tokenId].length - 1]);
          }
-         //create auction 
-         //Auction can be an interface
-         //TODO Allow here to set more than min by the seller.
+
          delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
          address auction = address(new SimpleAuction(tokenId, address(this), delayBlock));
          emit AuctionStarted(tokenId, auction);
+
          _auctionToTokens[auction] = tokenId;
     }
 
+    /**
+     * @dev Transfers `tokenId` to `to`.
+     *
+     * Requirements:
+     *
+     * - `tokenId` must exist.
+     * - `to` has to be a valid address
+     *
+     * Can be called only by an auction contract registered previously.
+     *
+     * Emits a {Transfer} event.
+     */
     function transferTo(address payable to) payable public {
-        //better to create variable or to call one more ?
-        //check for gas 
-
         uint token_id = _auctionToTokens[msg.sender];
         _owners[token_id].push(to);
         require(token_id >= 0);
         require(to != address(0x0));
         distribute(_owners[token_id], msg.value);
-
-       _owners[token_id].push(to);
+        address payable [] storage ownersArray = _owners[token_id];
+        ownersArray.push(to);
+        emit Transfer(ownersArray[ownersArray.length - 2], ownersArray[ownersArray.length - 1], token_id);
     } 
 
     function distribute(address payable[] memory owners, uint amount) private {
@@ -209,8 +187,6 @@ contract SharedNFT is ERC165 {
         for(uint i=0; i<owners.length; i++){
     
              owners[i].transfer(commision);
-     
-            //owners[i].transfer(commision);
         }
     }
 }
