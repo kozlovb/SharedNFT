@@ -35,7 +35,7 @@ contract SharedNFT is ERC165 {
 
     // Mapping owner address to token count
     //mapping(address => uint256) private _balances;
-    event AuctionStarted(uint256 tokenId, address auctionContract);
+    event AuctionStarted(uint256 tokenId, address auctionContract, uint endBlock);
     event Transfer(address from, address to, uint tokenId);
     
     /**
@@ -54,6 +54,20 @@ contract SharedNFT is ERC165 {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
             super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev Inspired by IERC721Metadata. Returns NFT name.
+     */
+    function name() public view virtual returns (string memory) {
+        return _name;
+    }
+
+    /**
+     * @dev Inspired by IERC721Metadata. Returns an NFT symbol.
+     */
+    function symbol() public view virtual returns (string memory) {
+        return _symbol;
     }
 
     /**
@@ -76,20 +90,6 @@ contract SharedNFT is ERC165 {
         require(tokenId >= 0);
         address payable [] memory result  = _owners[tokenId];
         return result;
-    }
-
-    /**
-     * @dev Inspired by IERC721Metadata. Returns NFT name.
-     */
-    function name() public view virtual returns (string memory) {
-        return _name;
-    }
-
-    /**
-     * @dev Inspired by IERC721Metadata. Returns an NFT symbol.
-     */
-    function symbol() public view virtual returns (string memory) {
-        return _symbol;
     }
 
     /**
@@ -154,7 +154,7 @@ contract SharedNFT is ERC165 {
 
          delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
          address auction = address(new SimpleAuction(tokenId, address(this), delayBlock));
-         emit AuctionStarted(tokenId, auction);
+         emit AuctionStarted(tokenId, auction, delayBlock + block.number);
 
          _auctionToTokens[auction] = tokenId;
     }
@@ -173,7 +173,6 @@ contract SharedNFT is ERC165 {
      */
     function transferTo(address payable to) payable public {
         uint token_id = _auctionToTokens[msg.sender];
-        _owners[token_id].push(to);
         require(token_id >= 0);
         require(to != address(0x0));
         distribute(_owners[token_id], msg.value);
