@@ -2,20 +2,7 @@ const sharedNFT = artifacts.require("SharedNFT");
 const SimpleAuction = artifacts.require("SimpleAuction");
 const truffleAssert = require('truffle-assertions');
 const util = require('util')
-
-const mine = async () => await web3.currentProvider.send({
-  jsonrpc: '2.0',
-  method: 'evm_mine',
-  id: new Date().getTime()
-}, function (error) {})
-
-function mineBlocks(numberOfBlocks) {
-  if (numberOfBlocks <= 0 )
-      return;
-  for (let i = 0; i < numberOfBlocks; i++) {
-    mine();
-  }
-}
+const common = require('./common/common');
 
 contract('SharedNFT', (accounts) => {
 
@@ -59,14 +46,11 @@ contract('SharedNFT', (accounts) => {
       var blockAfterSell = await web3.eth.getBlock("latest");
       var endAuctionBlockExpected = blockAfterSell.number + minAuctionBlocks; 
       var endAuctionBlockActual = 0;
-      var eventEmitted = false;
       truffleAssert.eventEmitted(result, 'AuctionStarted', (ev) => {
           simleAuctionAddress = ev.auctionContract;
           endAuctionBlockActual = ev.endBlock;
-          eventEmitted = true;
           return true;
-      });
-      assert(eventEmitted, "Sell Auction notification event has not been emited");
+      }, "Sell Auction notification event has not been emited");
       assert.equal(endAuctionBlockActual, endAuctionBlockExpected, "Auction event should end at an expeted block");
     });
 
@@ -83,13 +67,13 @@ contract('SharedNFT', (accounts) => {
         truffleAssert.eventEmitted(resultSell, 'AuctionStarted', (ev) => {
             simleAuctionAddress = ev.auctionContract;
             return true;
-        });
+        }, "Sell Auction notification event has not been emited");
 
         simleAuctionInstance = await SimpleAuction.at(simleAuctionAddress);
         await simleAuctionInstance.bid({value : 1000000, from : accounts[1]}); 
         let blockBeforeClose = await web3.eth.getBlock("latest")
 
-        mineBlocks(waitBlocks - blockBeforeClose.number + blockAfterSell.number);
+        common.mineBlocks(waitBlocks - blockBeforeClose.number + blockAfterSell.number);
         let blockAfterWait = await web3.eth.getBlock("latest")
 
         var resultClose = await debug(simleAuctionInstance.close());
@@ -118,9 +102,7 @@ contract('SharedNFT', (accounts) => {
             }
         };
         assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
-        assert.equal(fromActual, fromExpected, "Transfer event doesnt notify about a correct from address");
-        assert.equal(toActual, toExpected, "Transfer event doesnt notify about a correct to address");
+        assert.equal(fromActual, fromExpected, "Transfer event doesn't notify about a correct from address");
+        assert.equal(toActual, toExpected, "Transfer event doesn't notify about a correct to address");
     });
-
-
 });

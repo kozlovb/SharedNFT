@@ -6,7 +6,8 @@ import "./IERC165.sol";
 /**
  * @dev An interface of an NFT that couldn't be sold without paying a comission to previous owners
  */
-interface ISharedNFT is IERC165 {
+ //todo is IERC165
+interface ISharedNFT  {
 
     /**
      * @dev Returns the owner of the `tokenId` token.

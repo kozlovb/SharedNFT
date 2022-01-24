@@ -19,7 +19,7 @@ import "./openzeppelin/Strings.sol";
  * the Metadata extension, but not including the Enumerable extension, which is available separately as
  * {ERC721Enumerable}.
  */
-contract SharedNFT is ERC165 {
+contract SharedNFT is ERC165, ISharedNFT {
  
     // Token name
     string private _name;
@@ -50,11 +50,12 @@ contract SharedNFT is ERC165 {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
+     /*
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
             super.supportsInterface(interfaceId);
-    }
+    }*/
 
     /**
      * @dev Inspired by IERC721Metadata. Returns NFT name.
