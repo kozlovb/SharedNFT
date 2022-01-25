@@ -186,9 +186,8 @@ contract SharedNFT is ERC165, ISharedNFT {
 
         uint commision = amount/owners.length;
 
-        for(uint i=0; i<owners.length; i++){
-    
-             owners[i].transfer(commision);
+        for(uint i=0; i < owners.length; i++) {
+            owners[i].transfer(commision);
         }
     }
 }

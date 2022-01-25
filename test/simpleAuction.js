@@ -3,7 +3,7 @@ const MockedSharedNFT = artifacts.require("MockedSharedNFT");
 const truffleAssert = require('truffle-assertions');
 const util = require('util');
 const commmon = require('./common/common');
-
+  
 contract('SimpleAuction', (accounts) => {
 
     let SimpleAuctionInstance;
