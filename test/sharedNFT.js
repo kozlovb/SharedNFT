@@ -10,6 +10,7 @@ contract('SharedNFT', (accounts) => {
     let NFTName = "MyNFT";
     let NFTSymbol = "MNFT";
     let minAuctionBlocks = 3;
+    let minPrice = 1000;
 
     beforeEach(async () => {
       sharedNFTInstance = await sharedNFT.new(NFTName, NFTSymbol, minAuctionBlocks);
@@ -42,7 +43,8 @@ contract('SharedNFT', (accounts) => {
     });
 
     it('Organise an Auction', async () => {
-      let result  = await sharedNFTInstance.sell(0, 0, {from: accounts[0]});
+      var minPrice = 1000;
+      let result  = await sharedNFTInstance.sell(0, 0, minPrice, {from: accounts[0]});
       var blockAfterSell = await web3.eth.getBlock("latest");
       var endAuctionBlockExpected = blockAfterSell.number + minAuctionBlocks; 
       var endAuctionBlockActual = 0;
@@ -57,8 +59,8 @@ contract('SharedNFT', (accounts) => {
     it('Close an Auction', async () => {
   
         let waitBlocks = 15;
-
-        var resultSell  = await sharedNFTInstance.sell(0, waitBlocks, {from: accounts[0]});
+//todo min price
+        var resultSell  = await sharedNFTInstance.sell(0, waitBlocks, minPrice, {from: accounts[0]});
 
         let blockAfterSell = await web3.eth.getBlock("latest");
 

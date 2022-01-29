@@ -15,13 +15,14 @@ contract('SimpleAuction', (accounts) => {
     let blockAfterAuctionConstr = 0;
     let blockSimpleAuction = 0;
     let simpleAuctionInstance;
+    let minBid = 1000;
         
 
     beforeEach(async () => {
      
       mockedSharedNFTInstance = await MockedSharedNFT.new();
       blockSimpleAuction = (await web3.eth.getBlock("latest")).number;
-      simpleAuctionInstance = await SimpleAuction.new(tokenId, mockedSharedNFTInstance.address, delayBlocks);
+      simpleAuctionInstance = await SimpleAuction.new(tokenId, mockedSharedNFTInstance.address, delayBlocks, minBid);
       blockAfterAuctionConstr = await web3.eth.getBlock("latest")
     });
 
@@ -57,7 +58,7 @@ contract('SimpleAuction', (accounts) => {
       assert.equal(bidValueActual, bidValueExpected, "Offered value is wrong");
     });
 
-    it('Check unsuccessful bid', async () => {
+    it('Check unsuccessful bid less than max', async () => {
       var expectedWinner = accounts[0];
       var bidValueExpected  = 1000000;
       await simpleAuctionInstance.bid({value : bidValueExpected, from : accounts[0]}); 
@@ -68,28 +69,31 @@ contract('SimpleAuction', (accounts) => {
       assert.equal(bidValueActual, bidValueExpected, "Offered value is wrong");
     });
 
-    it('Check close', async () => {
+    it('Check unsuccessful bid less than min allowed bid', async () => {
+      await truffleAssert.reverts(simpleAuctionInstance.bid({value : minBid/2, from : accounts[0]}));
+    });
 
-      await simpleAuctionInstance.bid({value : 100, from : accounts[0]});
+    it('Check close', async () => {
+      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
       let blockBeforeClose = await web3.eth.getBlock("latest")
       commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       
       var resultClose = await simpleAuctionInstance.close();
  
-    //todo make a function
-    TransferEvents = await mockedSharedNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
-    var transferInCloseTx = false;
-    for (const tevent of TransferEvents) {
+      //todo make a function
+      TransferEvents = await mockedSharedNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
+      var transferInCloseTx = false;
+      for (const tevent of TransferEvents) {
         if (tevent.transactionHash == resultClose.tx) {
             transferInCloseTx = true;
         }
-    };
-    assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
+      };
+      assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
     });
 
     it('Check unsuccesfull close', async () => {
-      await simpleAuctionInstance.bid({value : 100, from : accounts[0]});
-      let blockBeforeClose = await web3.eth.getBlock("latest")
+      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
+      let blockBeforeClose = await web3.eth.getBlock("latest");
       commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
       await truffleAssert.reverts(simpleAuctionInstance.close());
     });

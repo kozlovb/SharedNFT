@@ -5,19 +5,21 @@ pragma solidity ^0.8.0;
 contract SimpleAuction {
 
 uint public _auctionEndBlock;
+uint public _minPrice;
 address payable public _winner;
 uint256 public _amount_offered;
 uint public _tokenId;
 address payable public _nftContract;
 
-constructor (uint tokenId_, address nftContract_, uint delayBlocks_) {
+constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPrice) {
     _tokenId = tokenId_;
     _nftContract = payable(nftContract_);
     _auctionEndBlock = block.number + delayBlocks_;
+    _minPrice = minPrice;
 }
 
 function bid() public payable {
-    require(msg.value > _amount_offered);
+    require(msg.value > _minPrice && msg.value > _amount_offered);
     //return money to the previous winner ( TODO May be better to notify ? sp that he can add up?)
     if (_amount_offered > 0) {
         _winner.send(_amount_offered);

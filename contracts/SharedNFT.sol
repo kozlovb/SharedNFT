@@ -136,7 +136,7 @@ contract SharedNFT is ERC165, ISharedNFT {
         _owners[tokenId].push(to);
         emit Transfer(address(0), to, tokenId);
     }
-
+//TODO uint or uint256
     /**
      * @dev Creates an auction to sell `tokenId` and transfer it to `to`.
      *
@@ -147,14 +147,14 @@ contract SharedNFT is ERC165, ISharedNFT {
      *
      */
      //TOOD min price ?
-    function sell(uint256 tokenId, uint256 delayBlock) public {
+    function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
 
          if (_owners[tokenId].length > 0 ) {
             require(msg.sender == _owners[tokenId][_owners[tokenId].length - 1]);
          }
 
          delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
-         address auction = address(new SimpleAuction(tokenId, address(this), delayBlock));
+         address auction = address(new SimpleAuction(tokenId, address(this), delayBlock, minPrice));
          emit AuctionStarted(tokenId, auction, delayBlock + block.number);
 
          _auctionToTokens[auction] = tokenId;

@@ -33,7 +33,7 @@ contract MockedSharedNFT is ISharedNFT {
         return result;
     }
 
-    function sell(uint256 tokenId, uint256 delayBlock) public {
+    function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
     }
 
     function transferTo(address payable to) payable public {

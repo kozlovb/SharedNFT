@@ -38,7 +38,7 @@ interface ISharedNFT  {
      *
      * - `tokenId` must exist.
      */
-    function sell(uint256 tokenId, uint256 delayBlock) external;
+    function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) external;
 
     /**
      * @dev Transfer of right to sell to a new adress.
