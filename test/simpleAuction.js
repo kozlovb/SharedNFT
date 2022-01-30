@@ -17,9 +17,7 @@ contract('SimpleAuction', (accounts) => {
     let simpleAuctionInstance;
     let minBid = 1000;
         
-
     beforeEach(async () => {
-     
       mockedSharedNFTInstance = await MockedSharedNFT.new();
       blockSimpleAuction = (await web3.eth.getBlock("latest")).number;
       simpleAuctionInstance = await SimpleAuction.new(tokenId, mockedSharedNFTInstance.address, delayBlocks, minBid);
@@ -43,34 +41,50 @@ contract('SimpleAuction', (accounts) => {
     });
 
     it('Check successful bid', async () => {
-      //todo how to add money and send from certin contract
+      //todo how to add money and send from certain contract
       //to do test where second bidder bids less, tries blocks etc
       var defaultWinnerExpected = 0x0;
       var expectedWinner = accounts[0];
-      var defaultWinnerActual = await simpleAuctionInstance._winner();
+      var defaultWinnerActual = await simpleAuctionInstance._maxBid();
       var bidValueExpected  = 1000000;
       assert.equal(defaultWinnerExpected, defaultWinnerActual, "Default winner should be 0 address");
       //todo check gas consumption, gas consumption requiements ?
       await simpleAuctionInstance.bid({value : bidValueExpected, from : accounts[0]}); 
       var winnerActual = await simpleAuctionInstance._winner();
       assert.equal(winnerActual, expectedWinner, "Wrong winner");
-      bidValueActual = await simpleAuctionInstance._amount_offered();
+      bidValueActual = await simpleAuctionInstance._maxBid();
       assert.equal(bidValueActual, bidValueExpected, "Offered value is wrong");
     });
 
-    it('Check unsuccessful bid less than max', async () => {
+    //need to check bid container instead
+    it('Check bids', async () => {
       var expectedWinner = accounts[0];
-      var bidValueExpected  = 1000000;
-      await simpleAuctionInstance.bid({value : bidValueExpected, from : accounts[0]}); 
-      await truffleAssert.reverts(simpleAuctionInstance.bid({value : bidValueExpected - 100, from : accounts[1]})); 
+      var account0BidExp  = 1000000;
+      var account1BidExp  = account0BidExp - 1;
+      await simpleAuctionInstance.bid({value : account0BidExp, from : accounts[0]}); 
+      await simpleAuctionInstance.bid({value : account1BidExp, from : accounts[1]}); 
+
+      var account0BidAct = await simpleAuctionInstance._bids(accounts[0]);
+      assert.equal(account0BidAct, account0BidExp, "Wrong bid for 0 account");
+      var account1BidAct = await simpleAuctionInstance._bids(accounts[0]);
+      assert.equal(account1BidAct, account0BidExp, "Wrong bid for 1st account");
+
+
       var winnerActual = await simpleAuctionInstance._winner();
       assert.equal(winnerActual, expectedWinner, "Wrong winner");
-      bidValueActual = await simpleAuctionInstance._amount_offered();
-      assert.equal(bidValueActual, bidValueExpected, "Offered value is wrong");
+      maxBidActual = await simpleAuctionInstance._maxBid();
+      assert.equal(maxBidActual, account0BidExp, "Offered value is wrong");
     });
-
+   
     it('Check unsuccessful bid less than min allowed bid', async () => {
       await truffleAssert.reverts(simpleAuctionInstance.bid({value : minBid/2, from : accounts[0]}));
+    });
+
+    it('Check unsuccesfull close', async () => {
+      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
+      let blockBeforeClose = await web3.eth.getBlock("latest");
+      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
+      await truffleAssert.reverts(simpleAuctionInstance.close());
     });
 
     it('Check close', async () => {
@@ -90,12 +104,4 @@ contract('SimpleAuction', (accounts) => {
       };
       assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
     });
-
-    it('Check unsuccesfull close', async () => {
-      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
-      let blockBeforeClose = await web3.eth.getBlock("latest");
-      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
-      await truffleAssert.reverts(simpleAuctionInstance.close());
-    });
-
 });

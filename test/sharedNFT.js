@@ -59,7 +59,7 @@ contract('SharedNFT', (accounts) => {
     it('Close an Auction', async () => {
   
         let waitBlocks = 15;
-//todo min price
+
         var resultSell  = await sharedNFTInstance.sell(0, waitBlocks, minPrice, {from: accounts[0]});
 
         let blockAfterSell = await web3.eth.getBlock("latest");

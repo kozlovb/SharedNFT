@@ -41,9 +41,9 @@ contract SharedNFT is ERC165, ISharedNFT {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(string memory name, string memory symbol, uint minDelayBlock_) {
-        _name = name;
-        _symbol = symbol;
+    constructor(string memory name_, string memory symbol_, uint minDelayBlock_) {
+        _name = name_;
+        _symbol = symbol_;
         _minDelayBlock = minDelayBlock_;
     }
 

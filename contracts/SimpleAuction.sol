@@ -1,15 +1,17 @@
 pragma solidity ^0.8.0;
 //TODO removed once debugged
 //TODO check for the interfce of 
-
+import './ISharedNFT.sol';
 contract SimpleAuction {
 
 uint public _auctionEndBlock;
 uint public _minPrice;
 address payable public _winner;
-uint256 public _amount_offered;
+uint256 public _maxBid;
 uint public _tokenId;
 address payable public _nftContract;
+mapping (address => uint) public _bids;
+bool closed = false;
 
 constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPrice) {
     _tokenId = tokenId_;
@@ -19,24 +21,50 @@ constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPri
 }
 
 function bid() public payable {
-    require(msg.value > _minPrice && msg.value > _amount_offered);
-    //return money to the previous winner ( TODO May be better to notify ? sp that he can add up?)
-    if (_amount_offered > 0) {
-        _winner.send(_amount_offered);
+    require(msg.value > _minPrice && !closed);
+    _bids[msg.sender] += msg.value;
+  
+    // Check if opt for gas
+    if (_bids[msg.sender] > _maxBid) {
+        _maxBid = _bids[msg.sender];
+        _winner = payable(msg.sender);
     }
-    _winner = payable(msg.sender);
-    _amount_offered = msg.value;
 }
+
+/// Withdraw a bid that was overbid.
+function withdraw() public {
+    require(block.number > _auctionEndBlock);
+    uint bidAmount = _bids[msg.sender];
+    if (bidAmount > 0) {
+        // It is important to set this to zero because the recipient
+        // can call this function again as part of the receiving call
+        // before `send` returns.
+        _bids[msg.sender] = 0;
+
+//can this realy fail   !!!??
+//how to substract gas used for withdrawal
+//todo can convertion fail
+        if (!payable(msg.sender).send(bidAmount)) {
+            _bids[msg.sender] = bidAmount;
+           
+        }
+    }
+  
+}
+
+
+
 
 function close() public {
 
-    require(block.number > _auctionEndBlock);
+    require(block.number > _auctionEndBlock && !closed);
 
-    if (_winner != address(0) && _amount_offered > 0) {
-       
-        _nftContract.call{value: _amount_offered}(abi.encodeWithSignature("transferTo(address)", _winner));
+    if (_winner != address(0) && _maxBid > 0) {
+       //if reverts all reverts unlike  
+       //_nftContract.call{value: _maxBid}(abi.encodeWithSignature("transferTo(address)", _winner));
+       ISharedNFT(_nftContract).transferTo(_winner);
+       closed = true;
     }
-    
 }
 
 }

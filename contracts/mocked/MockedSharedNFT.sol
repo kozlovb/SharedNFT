@@ -15,17 +15,12 @@ contract MockedSharedNFT is ISharedNFT {
     event Transfer(address from, address to, uint tokenId);
 
     //TODO external or public
-    function ownerOf(uint256 tokenId) external view virtual returns (address) {
+    function ownerOf(uint256) external view virtual returns (address) {
         return address(0x0);
     }
 
-    function allOwners(uint256 tokenId) external view returns (address payable[] memory owners) {
-      //  address payable [] memory result;
-      //  result.push(0x0);
-      //  result.push(0x0);
-        //0x0  = payable(address [payable(address(0x0)), payable(address(0x0))]);
-        //uint balance[3] = [1, 2, 3];
-        //return payable(address [0x0, 0x0]);
+    function allOwners(uint256) external view returns (address payable[] memory owners) {
+
 
         address payable[] memory result = new address payable [](2);
         result[0] = payable(address(0x0));
@@ -33,10 +28,10 @@ contract MockedSharedNFT is ISharedNFT {
         return result;
     }
 
-    function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
+    function sell(uint256 , uint256 , uint ) public {
     }
 
-    function transferTo(address payable to) payable public {
+    function transferTo(address payable) payable public {
 
         emit Transfer(address(0x0), address(0x0), 0);
     } 
