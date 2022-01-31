@@ -50,12 +50,12 @@ contract SharedNFT is ERC165, ISharedNFT {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-     /*
+     
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
             super.supportsInterface(interfaceId);
-    }*/
+    }
 
     /**
      * @dev Inspired by IERC721Metadata. Returns NFT name.

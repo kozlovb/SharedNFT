@@ -3,6 +3,7 @@ const MockedSharedNFT = artifacts.require("MockedSharedNFT");
 const truffleAssert = require('truffle-assertions');
 const util = require('util');
 const commmon = require('./common/common');
+const BN = require('bn.js');
   
 contract('SimpleAuction', (accounts) => {
 
@@ -15,8 +16,8 @@ contract('SimpleAuction', (accounts) => {
     let blockAfterAuctionConstr = 0;
     let blockSimpleAuction = 0;
     let simpleAuctionInstance;
-    let minBid = 1000;
-        
+    let minBid = BigInt(Math.pow(10, 18));
+
     beforeEach(async () => {
       mockedSharedNFTInstance = await MockedSharedNFT.new();
       blockSimpleAuction = (await web3.eth.getBlock("latest")).number;
@@ -59,10 +60,12 @@ contract('SimpleAuction', (accounts) => {
     //need to check bid container instead
     it('Check bids', async () => {
       var expectedWinner = accounts[0];
-      var account0BidExp  = 1000000;
-      var account1BidExp  = account0BidExp - 1;
-      await simpleAuctionInstance.bid({value : account0BidExp, from : accounts[0]}); 
-      await simpleAuctionInstance.bid({value : account1BidExp, from : accounts[1]}); 
+      var account0BidExp  = minBid + BigInt(100);
+      var account1BidA = account0BidExp/BigInt(2) - BigInt(1);
+      var account1BidB = account0BidExp/BigInt(2) - BigInt(1);
+      var account1BidExp  = account1BidA + account1BidB;
+      await simpleAuctionInstance.bid({value : new BN(account0BidExp), from : accounts[0]}); 
+      await simpleAuctionInstance.bid({value : new BN(account1BidExp), from : accounts[1]}); 
 
       var account0BidAct = await simpleAuctionInstance._bids(accounts[0]);
       assert.equal(account0BidAct, account0BidExp, "Wrong bid for 0 account");
@@ -75,20 +78,34 @@ contract('SimpleAuction', (accounts) => {
       maxBidActual = await simpleAuctionInstance._maxBid();
       assert.equal(maxBidActual, account0BidExp, "Offered value is wrong");
     });
-   
-    it('Check unsuccessful bid less than min allowed bid', async () => {
-      await truffleAssert.reverts(simpleAuctionInstance.bid({value : minBid/2, from : accounts[0]}));
-    });
 
     it('Check unsuccesfull close', async () => {
-      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
+      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
       let blockBeforeClose = await web3.eth.getBlock("latest");
       commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
       await truffleAssert.reverts(simpleAuctionInstance.close());
     });
 
+    it('Check close with less than min allowed bid', async () => {
+      await simpleAuctionInstance.bid({value : new BN(minBid/BigInt(2)), from : accounts[0]});
+      let blockBeforeClose = await web3.eth.getBlock("latest")
+      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
+      
+      var resultClose = await simpleAuctionInstance.close();
+ 
+      //todo make a function
+      TransferEvents = await mockedSharedNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
+      var transferInCloseTx = false;
+      for (const tevent of TransferEvents) {
+        if (tevent.transactionHash == resultClose.tx) {
+            transferInCloseTx = true;
+        }
+      };
+      assert(!transferInCloseTx, "Transfer event should not be emitted during close transaction");
+    });
+
     it('Check close', async () => {
-      await simpleAuctionInstance.bid({value : minBid + 100, from : accounts[0]});
+      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
       let blockBeforeClose = await web3.eth.getBlock("latest")
       commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       
@@ -103,5 +120,25 @@ contract('SimpleAuction', (accounts) => {
         }
       };
       assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
+    });
+
+    //available only after bid
+    it('Check withdrawal', async () => {
+      var balance0 = await web3.eth.getBalance(accounts[0]);
+      var balance1 = await web3.eth.getBalance(accounts[1]);
+
+      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
+      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[1]});
+      let blockBeforeClose = await web3.eth.getBlock("latest");
+      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
+      await debug(simpleAuctionInstance.close());
+      await simpleAuctionInstance.withdraw({from : accounts[0]});
+      await simpleAuctionInstance.withdraw({from : accounts[1]});
+
+      balanceDiff0 = balance0 - (await web3.eth.getBalance(accounts[0]));
+      balanceDiff1 = balance1 - (await web3.eth.getBalance(accounts[1]));
+
+      assert(balanceDiff0 > minBid + BigInt(100), "Account0 should have spent funds on the item");
+      assert(balanceDiff1 < minBid + BigInt(100), "Account0 should have kept his funds except gas");
     });
 });

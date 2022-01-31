@@ -19,9 +19,7 @@ contract MockedSharedNFT is ISharedNFT {
         return address(0x0);
     }
 
-    function allOwners(uint256) external view returns (address payable[] memory owners) {
-
-
+    function allOwners(uint256) external view returns (address payable[] memory) {
         address payable[] memory result = new address payable [](2);
         result[0] = payable(address(0x0));
         result[0] = payable(address(0x0));

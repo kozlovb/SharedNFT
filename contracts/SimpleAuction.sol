@@ -21,7 +21,7 @@ constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPri
 }
 
 function bid() public payable {
-    require(msg.value > _minPrice && !closed);
+    require(!closed);
     _bids[msg.sender] += msg.value;
   
     // Check if opt for gas
@@ -33,7 +33,7 @@ function bid() public payable {
 
 /// Withdraw a bid that was overbid.
 function withdraw() public {
-    require(block.number > _auctionEndBlock);
+    require(block.number > _auctionEndBlock && closed);
     uint bidAmount = _bids[msg.sender];
     if (bidAmount > 0) {
         // It is important to set this to zero because the recipient
@@ -46,25 +46,20 @@ function withdraw() public {
 //todo can convertion fail
         if (!payable(msg.sender).send(bidAmount)) {
             _bids[msg.sender] = bidAmount;
-           
         }
     }
   
 }
 
-
-
-
 function close() public {
-
     require(block.number > _auctionEndBlock && !closed);
-
-    if (_winner != address(0) && _maxBid > 0) {
-       //if reverts all reverts unlike  
+    if (_winner != address(0) && _maxBid > _minPrice) {
+        //if reverts all reverts unlike  
        //_nftContract.call{value: _maxBid}(abi.encodeWithSignature("transferTo(address)", _winner));
+       _bids[_winner] = 0;
        ISharedNFT(_nftContract).transferTo(_winner);
-       closed = true;
     }
+    closed = true;
 }
 
 }
