@@ -1,6 +1,4 @@
 pragma solidity ^0.8.0;
-//TODO removed once debugged
-//TODO check for the interfce of 
 import './ISharedNFT.sol';
 contract SimpleAuction {
 
@@ -21,12 +19,11 @@ constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPri
 }
 
 function bid() public payable {
-    require(!closed);
-    _bids[msg.sender] += msg.value;
-  
-    // Check if opt for gas
-    if (_bids[msg.sender] > _maxBid) {
-        _maxBid = _bids[msg.sender];
+    require(block.number < _auctionEndBlock && !closed);
+    uint new_bid = _bids[msg.sender] + msg.value;
+    _bids[msg.sender] = new_bid;
+    if (new_bid > _maxBid) {
+        _maxBid = new_bid;
         _winner = payable(msg.sender);
     }
 }
@@ -36,19 +33,9 @@ function withdraw() public {
     require(block.number > _auctionEndBlock && closed);
     uint bidAmount = _bids[msg.sender];
     if (bidAmount > 0) {
-        // It is important to set this to zero because the recipient
-        // can call this function again as part of the receiving call
-        // before `send` returns.
         _bids[msg.sender] = 0;
-
-//can this realy fail   !!!??
-//how to substract gas used for withdrawal
-//todo can convertion fail
-        if (!payable(msg.sender).send(bidAmount)) {
-            _bids[msg.sender] = bidAmount;
-        }
+        payable(msg.sender).transfer(bidAmount);
     }
-  
 }
 
 function close() public {

@@ -64,7 +64,8 @@ contract('SimpleAuction', (accounts) => {
       var account1BidA = account0BidExp/BigInt(2) - BigInt(1);
       var account1BidB = account0BidExp/BigInt(2) - BigInt(1);
       var account1BidExp  = account1BidA + account1BidB;
-      await simpleAuctionInstance.bid({value : new BN(account0BidExp), from : accounts[0]}); 
+
+      await simpleAuctionInstance.bid({ value : new BN(account0BidExp), from : accounts[0]}); 
       await simpleAuctionInstance.bid({value : new BN(account1BidExp), from : accounts[1]}); 
 
       var account0BidAct = await simpleAuctionInstance._bids(accounts[0]);
@@ -139,6 +140,6 @@ contract('SimpleAuction', (accounts) => {
       balanceDiff1 = balance1 - (await web3.eth.getBalance(accounts[1]));
 
       assert(balanceDiff0 > minBid + BigInt(100), "Account0 should have spent funds on the item");
-      assert(balanceDiff1 < minBid + BigInt(100), "Account0 should have kept his funds except gas");
+      assert(balanceDiff1 < minBid + BigInt(100), "Account1 should have kept his funds except gas");
     });
 });

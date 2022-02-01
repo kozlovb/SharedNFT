@@ -4,6 +4,10 @@ const truffleAssert = require('truffle-assertions');
 const util = require('util')
 const common = require('./common/common');
 
+// An example of gas estimate:
+// const gasEstimate = await simleAuctionInstance.close.estimateGas();
+// console.log("gasEstimate %s", gasEstimate);
+
 contract('SharedNFT', (accounts) => {
 
     let sharedNFTInstance;
@@ -22,9 +26,7 @@ contract('SharedNFT', (accounts) => {
         endAuctionBlockActual = ev.endBlock;
         eventEmitted = true;
         return true;
-    });
-
-
+      });
     });
 
     it('Check NFT name', async () => {
