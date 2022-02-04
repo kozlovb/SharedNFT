@@ -65,7 +65,7 @@ contract('SimpleAuction', (accounts) => {
       var account1BidB = account0BidExp/BigInt(2) - BigInt(1);
       var account1BidExp  = account1BidA + account1BidB;
 
-      await simpleAuctionInstance.bid({ value : new BN(account0BidExp), from : accounts[0]}); 
+      await simpleAuctionInstance.bid({ value : new BN(account0BidExp), from : accounts[0]});
       await simpleAuctionInstance.bid({value : new BN(account1BidExp), from : accounts[1]}); 
 
       var account0BidAct = await simpleAuctionInstance._bids(accounts[0]);

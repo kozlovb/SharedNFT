@@ -4,16 +4,18 @@ pragma solidity ^0.8.0;
 
 import './ISharedNFT.sol';
 import './SimpleAuction.sol';
-import "./ERC165.sol";
-import "./openzeppelin/Strings.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
+import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
-//TODO removed once debugged
-// TODO styling _v class members 
+
 // local normal except constructor
 // camel notation
 // Create an interface ? 
 //TODO - sort out where real NFT is stored.
 //TODO think of interface to metadata 
+// TODO check support interfaces
+// tODO add basic URI
 /**
  * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
  * the Metadata extension, but not including the Enumerable extension, which is available separately as
@@ -51,14 +53,15 @@ contract SharedNFT is ERC165, ISharedNFT {
      * @dev See {IERC165-supportsInterface}.
      */
      
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
+            interfaceId == type(IERC721Metadata).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
     /**
-     * @dev Inspired by IERC721Metadata. Returns NFT name.
+     * @dev Implements by IERC721Metadata. Returns NFT name.
      */
     function name() public view virtual returns (string memory) {
         return _name;

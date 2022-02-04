@@ -1,13 +1,13 @@
 
 pragma solidity ^0.8.0;
 
-import "./IERC165.sol";
+import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
 
 /**
  * @dev An interface of an NFT that couldn't be sold without paying a comission to previous owners
  */
  //todo is IERC165
-interface ISharedNFT  {
+interface ISharedNFT is IERC165 {
 
     /**
      * @dev Returns the owner of the `tokenId` token.

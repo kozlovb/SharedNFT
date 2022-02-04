@@ -33,4 +33,8 @@ contract MockedSharedNFT is ISharedNFT {
 
         emit Transfer(address(0x0), address(0x0), 0);
     } 
+
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165) returns (bool) {
+        return true;
+    }
 }

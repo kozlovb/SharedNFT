@@ -41,8 +41,6 @@ function withdraw() public {
 function close() public {
     require(block.number > _auctionEndBlock && !closed);
     if (_winner != address(0) && _maxBid > _minPrice) {
-        //if reverts all reverts unlike  
-       //_nftContract.call{value: _maxBid}(abi.encodeWithSignature("transferTo(address)", _winner));
        _bids[_winner] = 0;
        ISharedNFT(_nftContract).transferTo(_winner);
     }
