@@ -17,9 +17,8 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 // TODO check support interfaces
 // tODO add basic URI
 /**
- * @dev Implementation of https://eips.ethereum.org/EIPS/eip-721[ERC721] Non-Fungible Token Standard, including
- * the Metadata extension, but not including the Enumerable extension, which is available separately as
- * {ERC721Enumerable}.
+ * @dev Implementation of ISharedNFT - shared non-Fungible Token Interface, including
+ * the Metadata extension, 
  */
 contract SharedNFT is ERC165, ISharedNFT {
  
@@ -29,19 +28,17 @@ contract SharedNFT is ERC165, ISharedNFT {
     // Token symbol
     string private _symbol;
 
+    // Auction parameter. Fixes min delay block for Auctions triggered by NFT owners
     uint private _minDelayBlock;
 
     // Mapping from token ID to owner addresses
     mapping(uint256 => address payable[]) private _owners;
+
+    // Mapping auction addresses to tokens
     mapping(address => uint256) private _auctionToTokens;
 
-    // Mapping owner address to token count
-    //mapping(address => uint256) private _balances;
-    event AuctionStarted(uint256 tokenId, address auctionContract, uint endBlock);
-    event Transfer(address from, address to, uint tokenId);
-    
     /**
-     * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
+     * @dev Initializes the contract by setting a `name`, a `symbol` and a 'minDelayBlock_' to the token collection.
      */
     constructor(string memory name_, string memory symbol_, uint minDelayBlock_) {
         _name = name_;
@@ -52,7 +49,7 @@ contract SharedNFT is ERC165, ISharedNFT {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-     
+     //todo test it
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
@@ -139,7 +136,7 @@ contract SharedNFT is ERC165, ISharedNFT {
         _owners[tokenId].push(to);
         emit Transfer(address(0), to, tokenId);
     }
-//TODO uint or uint256
+    //TODO uint or uint256
     /**
      * @dev Creates an auction to sell `tokenId` and transfer it to `to`.
      *
@@ -149,7 +146,7 @@ contract SharedNFT is ERC165, ISharedNFT {
      * - `delayBlock` cannot be less then a minimum set in a contract initially.
      *
      */
-     //TOOD min price ?
+
     function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
 
          if (_owners[tokenId].length > 0 ) {

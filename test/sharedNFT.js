@@ -1,5 +1,6 @@
 const sharedNFT = artifacts.require("SharedNFT");
 const SimpleAuction = artifacts.require("SimpleAuction");
+const interfaceID = artifacts.require("InterfaceID");
 const truffleAssert = require('truffle-assertions');
 const util = require('util')
 const common = require('./common/common');
@@ -31,12 +32,24 @@ contract('SharedNFT', (accounts) => {
 
     it('Check NFT name', async () => {
       NFTNameActual = await sharedNFTInstance.name();
-      assert.equal(NFTNameActual, NFTName, "NFT name is wrong");
+      assert.equal(NFTNameActual, NFTName, "NFT name is incorrect");
     });
 
     it('Check NFT symbol', async () => {
       NFTSymbolActual = await sharedNFTInstance.symbol();
-      assert.equal(NFTSymbolActual, NFTSymbol, "NFT symbol is wrong");
+      assert.equal(NFTSymbolActual, NFTSymbol, "NFT symbol is incorrect");
+    });
+
+    it('Check Supported Interfaces', async () => {
+      interfaceIDInstance = await interfaceID.new();
+      var tmp  = await interfaceIDInstance.interfaceID("ISharedNFT");
+      console.log(tmp)
+      //assert(sharedNFTInstance.supportsInterface(interfaceIDInstance.interfaceID("SharedNFT")),
+      // "SharedNFT has to support ISharedNFT");
+      assert(await sharedNFTInstance.supportsInterface(tmp),
+      "SharedNFT has to support ISharedNFT");
+      assert(await sharedNFTInstance.supportsInterface(await interfaceIDInstance.interfaceID("IERC721Metadata")),
+       "SharedNFT has to support IERC721Metadata");
     });
 
     it('Minted token belongs to the authors account', async () => {

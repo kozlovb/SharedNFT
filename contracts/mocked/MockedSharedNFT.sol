@@ -11,9 +11,6 @@ import '../ISharedNFT.sol';
  */
 contract MockedSharedNFT is ISharedNFT {
  
-    event AuctionStarted(uint256 tokenId, address auctionContract, uint endBlock);
-    event Transfer(address from, address to, uint tokenId);
-
     //TODO external or public
     function ownerOf(uint256) external view virtual returns (address) {
         return address(0x0);

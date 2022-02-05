@@ -9,6 +9,18 @@ import "@openzeppelin/contracts/utils/introspection/IERC165.sol";
  //todo is IERC165
 interface ISharedNFT is IERC165 {
 
+
+    /**
+     * @dev Emitted when Auction for `tokenId` on the "address" ending at "endBlock" is started.
+     */
+    event AuctionStarted(uint256 tokenId, address auctionContract, uint endBlock);
+    /**
+     * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
+     */
+   // event Transfer(address indexed from, address indexed to, uint256 indexed tokenId);
+   //what does index stand for ?
+    event Transfer(address from, address to, uint tokenId);
+
     /**
      * @dev Returns the owner of the `tokenId` token.
      *      Owner has a right to organise an aauction in order to sell a NFT.
