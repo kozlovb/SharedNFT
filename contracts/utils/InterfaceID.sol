@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 import '../ISharedNFT.sol';
 import "@openzeppelin/contracts/token/ERC721/extensions/IERC721Metadata.sol";
 
-
+// A test helper code, not to be deployed
 library InterfaceID {
 
     function interfaceID(string calldata interfaceName) external view returns (bytes4) {

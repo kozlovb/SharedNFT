@@ -13,12 +13,11 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 // camel notation
 // Create an interface ? 
 //TODO - sort out where real NFT is stored.
-//TODO think of interface to metadata 
-// TODO check support interfaces
+
 // tODO add basic URI
 /**
- * @dev Implementation of ISharedNFT - shared non-Fungible Token Interface, including
- * the Metadata extension, 
+ * @dev Implementation of ISharedNFT, which is shared non-fungible token interface. It also implements
+ * the IERC721Metadata Metadata extension of a classic IERC721 interface.
  */
 contract SharedNFT is ERC165, ISharedNFT {
  
@@ -37,19 +36,21 @@ contract SharedNFT is ERC165, ISharedNFT {
     // Mapping auction addresses to tokens
     mapping(address => uint256) private _auctionToTokens;
 
+    string _uriBase;
+
     /**
      * @dev Initializes the contract by setting a `name`, a `symbol` and a 'minDelayBlock_' to the token collection.
      */
-    constructor(string memory name_, string memory symbol_, uint minDelayBlock_) {
+    constructor(string memory name_, string memory symbol_, string memory uriBase_, uint minDelayBlock_) {
         _name = name_;
         _symbol = symbol_;
+        _uriBase = uriBase_;
         _minDelayBlock = minDelayBlock_;
     }
 
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-     //todo test it
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
         return
             interfaceId == type(ISharedNFT).interfaceId ||
@@ -94,10 +95,10 @@ contract SharedNFT is ERC165, ISharedNFT {
     }
 
     /**
-     * @dev Inspired by IERC721Metadata.
+     * @dev Returns a token URI.
      */
     function tokenURI(uint256 tokenId) public view virtual returns (string memory) {
-       require(_exists(tokenId), "ERC721Metadata: URI query for nonexistent token");
+       require(_exists(tokenId), "Shared NFT metadata: URI query for nonexistent token");
        string memory baseURI = _baseURI();
        return bytes(baseURI).length > 0 ? string(abi.encodePacked(baseURI, Strings.toString(tokenId))) : "";
     }
@@ -108,7 +109,7 @@ contract SharedNFT is ERC165, ISharedNFT {
      * by default, can be overriden in child contracts.
      */
     function _baseURI() internal view virtual returns (string memory) {
-        return "";
+        return _uriBase;
     }
 
     /**
@@ -176,12 +177,13 @@ contract SharedNFT is ERC165, ISharedNFT {
         uint token_id = _auctionToTokens[msg.sender];
         require(token_id >= 0);
         require(to != address(0x0));
-        distribute(_owners[token_id], msg.value);
         address payable [] storage ownersArray = _owners[token_id];
+        distribute(ownersArray, msg.value);
         ownersArray.push(to);
         emit Transfer(ownersArray[ownersArray.length - 2], ownersArray[ownersArray.length - 1], token_id);
     } 
 
+//TODO think of nicer distribute 
     function distribute(address payable[] memory owners, uint amount) private {
 
         uint commision = amount/owners.length;

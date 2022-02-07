@@ -5,9 +5,7 @@ pragma solidity ^0.8.0;
 import '../ISharedNFT.sol';
 
 /**
- * @dev Mocked shared NFT for testing.
- * the Metadata extension, but not including the Enumerable extension, which is available separately as
- * {ERC721Enumerable}.
+ * @dev Mocked implementation of Shared NFT interface for testing purposes.
  */
 contract MockedSharedNFT is ISharedNFT {
  
