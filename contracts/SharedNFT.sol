@@ -11,10 +11,10 @@ import "@openzeppelin/contracts/utils/introspection/ERC165.sol";
 
 // local normal except constructor
 // camel notation
-// Create an interface ? 
-//TODO - sort out where real NFT is stored.
 
-// tODO add basic URI
+//TODO - sort out where real NFT is stored.
+//TODO - make an md . 
+
 /**
  * @dev Implementation of ISharedNFT, which is shared non-fungible token interface. It also implements
  * the IERC721Metadata Metadata extension of a classic IERC721 interface.
@@ -59,14 +59,14 @@ contract SharedNFT is ERC165, ISharedNFT {
     }
 
     /**
-     * @dev Implements by IERC721Metadata. Returns NFT name.
+     * @dev Implements IERC721Metadata. Returns NFT name.
      */
     function name() public view virtual returns (string memory) {
         return _name;
     }
 
     /**
-     * @dev Inspired by IERC721Metadata. Returns an NFT symbol.
+     * @dev Implements IERC721Metadata. Returns an NFT symbol.
      */
     function symbol() public view virtual returns (string memory) {
         return _symbol;
@@ -77,10 +77,8 @@ contract SharedNFT is ERC165, ISharedNFT {
      */
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(tokenId >= 0);
-        
         address payable [] storage ownersArray = _owners[tokenId];
         address owner = ownersArray[ownersArray.length - 1];
-       
         require(owner != address(0), "SharedNFT: owner query for nonexistent token");
         return owner;
     }
@@ -137,6 +135,7 @@ contract SharedNFT is ERC165, ISharedNFT {
         _owners[tokenId].push(to);
         emit Transfer(address(0), to, tokenId);
     }
+
     //TODO uint or uint256
     /**
      * @dev Creates an auction to sell `tokenId` and transfer it to `to`.
@@ -147,7 +146,6 @@ contract SharedNFT is ERC165, ISharedNFT {
      * - `delayBlock` cannot be less then a minimum set in a contract initially.
      *
      */
-
     function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
 
          if (_owners[tokenId].length > 0 ) {

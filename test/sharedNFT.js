@@ -6,14 +6,10 @@ const util = require('util')
 const common = require('./common/common');
 
 // An example of gas estimate:
-// const gasEstimate = await simleAuctionInstance.close.estimateGas();
+// const gasEstimate = await sharedNFTInstance.ownerOf.estimateGas(0);
 // console.log("gasEstimate %s", gasEstimate);
 
-//fix variables no capitals
-
 //write md
-
-//todo test nft name
 
 contract('SharedNFT', (accounts) => {
 
@@ -68,8 +64,8 @@ contract('SharedNFT', (accounts) => {
     });
 
     it('Minted token belongs to the authors account', async () => {
-     const owner = await sharedNFTInstance.ownerOf(0);
-     assert.equal(owner, accounts[0], "Owner should be account that minted");
+      const owner = await sharedNFTInstance.ownerOf(0);
+      assert.equal(owner, accounts[0], "Owner should be account that minted");
     });
 
     it('Organise an Auction', async () => {
