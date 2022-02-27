@@ -41,8 +41,9 @@ function withdraw() public {
 function close() public {
     require(block.number > _auctionEndBlock && !closed);
     if (_winner != address(0) && _maxBid > _minPrice) {
+        //TODO rethink this condition
        _bids[_winner] = 0;
-       ISharedNFT(_nftContract).transferTo(_winner);
+       ISharedNFT(_nftContract).transferTo{value: _maxBid}(_winner);
     }
     closed = true;
 }

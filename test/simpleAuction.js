@@ -131,9 +131,9 @@ contract('SimpleAuction', (accounts) => {
       await simpleAuctionInstance.withdraw({from : accounts[0]});
       await simpleAuctionInstance.withdraw({from : accounts[1]});
 
-      balanceDiff0 = balance0 - (await web3.eth.getBalance(accounts[0]));
-      balanceDiff1 = balance1 - (await web3.eth.getBalance(accounts[1]));
-
+      const balanceDiff0 = balance0 - (await web3.eth.getBalance(accounts[0]));
+      const balanceDiff1 = balance1 - (await web3.eth.getBalance(accounts[1]));
+//TODO work on this condition
       assert(balanceDiff0 > minBid + BigInt(100), "Account0 should have spent funds on the item");
       assert(balanceDiff1 < minBid + BigInt(100), "Account1 should have kept his funds except gas");
     });

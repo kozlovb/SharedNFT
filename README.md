@@ -52,3 +52,6 @@ This contract also can be used for a Gerbalife like scheme where convincing each
 
 # SharedNFT
 
+
+###TODO about commission probably it makes sense to have commison in the interface, but on the other hand it will limit the model
+so the idea here is to have interfaces by payment models embedded in the owners DAO

@@ -23,7 +23,7 @@ interface ISharedNFT is IERC165 {
 
     /**
      * @dev Returns the owner of the `tokenId` token.
-     *      Owner has a right to organise an aauction in order to sell a NFT.
+     *      Owner has a right to organise an auction in order to sell a NFT.
      *
      * Requirements:
      *
@@ -31,16 +31,7 @@ interface ISharedNFT is IERC165 {
      */
 
     function ownerOf(uint256 tokenId) external view returns (address owner);
-    /**
-     * @dev Returns the array of NFT owners of the `tokenId` token.
-     *      Those owners are getting a commision. 
-     *
-     * Requirements:
-     *
-     * - `tokenId` must exist.
-     */
 
-    function allOwners(uint256 tokenId) external view returns (address payable[] memory owners);
 //todo external vs public
     /**
      * @dev Starts an auction in order to sell a given token.

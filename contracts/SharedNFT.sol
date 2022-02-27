@@ -29,23 +29,31 @@ contract SharedNFT is ERC165, ISharedNFT {
 
     // Auction parameter. Fixes min delay block for Auctions triggered by NFT owners
     uint private _minDelayBlock;
+//TODO uint or not ? 1000000
+    uint public _commision;
+    uint public precision = 10000;
 
-    // Mapping from token ID to owner addresses
-    mapping(uint256 => address payable[]) private _owners;
+    // Mapping from token ID to owners
+    mapping(uint256 => address payable) private _owners;
 
     // Mapping auction addresses to tokens
     mapping(address => uint256) private _auctionToTokens;
+//todo artist shoulb be able to sell his rights
+    address payable public _artist;
 
     string _uriBase;
 
     /**
      * @dev Initializes the contract by setting a `name`, a `symbol` and a 'minDelayBlock_' to the token collection.
      */
-    constructor(string memory name_, string memory symbol_, string memory uriBase_, uint minDelayBlock_) {
+    constructor(string memory name_, string memory symbol_, string memory uriBase_, uint minDelayBlock_, uint commision_) {
+        require(_commision < precision);
         _name = name_;
         _symbol = symbol_;
         _uriBase = uriBase_;
         _minDelayBlock = minDelayBlock_;
+        _artist = payable(msg.sender); 
+        _commision = commision_;
     }
 
     /**
@@ -73,23 +81,13 @@ contract SharedNFT is ERC165, ISharedNFT {
     }
 
     /**
-     * @dev Returns an owner that can initiate a sell auction.
+     * @dev Returns an owner that can initiate a sale auction.
      */
     function ownerOf(uint256 tokenId) public view virtual returns (address) {
         require(tokenId >= 0);
-        address payable [] storage ownersArray = _owners[tokenId];
-        address owner = ownersArray[ownersArray.length - 1];
+        address owner = _owners[tokenId];
         require(owner != address(0), "SharedNFT: owner query for nonexistent token");
         return owner;
-    }
-
-    /**
-     * @dev Returns a set of owners getting commision from every sell.
-     */
-    function allOwners(uint256 tokenId) external view returns (address payable[] memory owners) {
-        require(tokenId >= 0);
-        address payable [] memory result  = _owners[tokenId];
-        return result;
     }
 
     /**
@@ -116,7 +114,7 @@ contract SharedNFT is ERC165, ISharedNFT {
      * Tokens start existing when they are minted (`_mint`).
      */
     function _exists(uint256 tokenId) internal view virtual returns (bool) {
-        return _owners[tokenId].length > 0;
+        return _owners[tokenId] != address(0x0);
     }
 
     /**
@@ -129,10 +127,11 @@ contract SharedNFT is ERC165, ISharedNFT {
      *
      * Emits a {Transfer} event.
      */
+     //TODO mint with 
     function mint(address payable to, uint256 tokenId) public {
         require(to != address(0), "ERC721: mint to the zero address");
         require(!_exists(tokenId), "ERC721: token already minted");
-        _owners[tokenId].push(to);
+        _owners[tokenId] = to;
         emit Transfer(address(0), to, tokenId);
     }
 
@@ -148,9 +147,9 @@ contract SharedNFT is ERC165, ISharedNFT {
      */
     function sell(uint256 tokenId, uint256 delayBlock, uint minPrice) public {
 
-         if (_owners[tokenId].length > 0 ) {
-            require(msg.sender == _owners[tokenId][_owners[tokenId].length - 1]);
-         }
+        //TODO check also for non zero
+         require(msg.sender == _owners[tokenId]);
+         
 
          delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
          address auction = address(new SimpleAuction(tokenId, address(this), delayBlock, minPrice));
@@ -174,20 +173,22 @@ contract SharedNFT is ERC165, ISharedNFT {
     function transferTo(address payable to) payable public {
         uint token_id = _auctionToTokens[msg.sender];
         require(token_id >= 0);
-        require(to != address(0x0));
-        address payable [] storage ownersArray = _owners[token_id];
-        distribute(ownersArray, msg.value);
-        ownersArray.push(to);
-        emit Transfer(ownersArray[ownersArray.length - 2], ownersArray[ownersArray.length - 1], token_id);
+        require(to != address(0x0));  
+        address payable previous_owner = _owners[token_id];
+        distribute(previous_owner, msg.value);
+        
+        _owners[token_id] = to;
+        emit Transfer(previous_owner, to, token_id);
     } 
 
-//TODO think of nicer distribute 
-    function distribute(address payable[] memory owners, uint amount) private {
+    function distribute(address payable owner, uint amount) private {
 
-        uint commision = amount/owners.length;
+        //Not checking for overflow as commision is limited by precision and total amount of ether is under 
+        // 10^9
+        uint amount_commision = (amount * _commision)/precision;
 
-        for(uint i=0; i < owners.length; i++) {
-            owners[i].transfer(commision);
-        }
+        _artist.transfer(amount_commision);
+        owner.transfer(amount - amount_commision);
     }
 }
+
