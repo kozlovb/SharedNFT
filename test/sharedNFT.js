@@ -157,7 +157,7 @@ contract('SharedNFT', (accounts) => {
         acc_2_diff = (new BN(await web3.eth.getBalance(accounts[2]))).sub(new BN(balance2));
         console.log("gas used");
         console.log(resultBid.receipt.gasUsed);
-        acc_2_diff_exp = - (new BN(bid)).sub((new BN(gasPriceBid)).mul((new BN(resultBid.receipt.gasUsed))));
+        acc_2_diff_exp = - (new BN(bid)).sub( (new BN(gasPriceBid)).mul((new BN(resultBid.receipt.gasUsed))) );
         assert.equal(artist_balance_diff, artist_balance_diff_exp, "Artist didn't recieve correct amount");
         assert.equal(acc_1_diff, acc_1_diff_exp, "Account 1, owner of the NFT, has an incorrect balance after sale even");
         assert.equal(acc_2_diff.toNumber(), acc_2_diff_exp, "Account 2, buyer of the NFT, has an incorrect balance after purchase even");

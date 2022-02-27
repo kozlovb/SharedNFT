@@ -12,7 +12,7 @@ contract('SimpleAuction', (accounts) => {
     let blockAfterAuctionConstr = 0;
     let blockSimpleAuction = 0;
     let simpleAuctionInstance;
-    const minBid = BigInt(Math.pow(10, 18));
+    const minBid = BigInt(Math.pow(10, 15));
 
     beforeEach(async () => {
       mockedSharedNFTInstance = await MockedSharedNFT.new();
@@ -120,21 +120,30 @@ contract('SimpleAuction', (accounts) => {
 
     //available only after bid
     it('Check withdrawal', async () => {
-      const balance0 = await web3.eth.getBalance(accounts[0]);
       const balance1 = await web3.eth.getBalance(accounts[1]);
+      const balance2 = await web3.eth.getBalance(accounts[2]);
 
-      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
-      await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[1]});
+      ResultBid1 = await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[1]});
+      ResultBid2 = await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(1000)), from : accounts[2]});
+
+      console.log(ResultBid1.receipt.gasUsed);
+      const tx = await web3.eth.getTransaction(ResultBid1.tx);
+      const gasPrice = tx.gasPrice;
+
+
+//todo get gas funds function ?
       const blockBeforeClose = await web3.eth.getBlock("latest");
       commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       await debug(simpleAuctionInstance.close());
-      await simpleAuctionInstance.withdraw({from : accounts[0]});
-      await simpleAuctionInstance.withdraw({from : accounts[1]});
+      ResultWithdraw1 = await simpleAuctionInstance.withdraw({from : accounts[1]});
+      ResultWithdraw2 = await simpleAuctionInstance.withdraw({from : accounts[2]});
 
-      const balanceDiff0 = balance0 - (await web3.eth.getBalance(accounts[0]));
-      const balanceDiff1 = balance1 - (await web3.eth.getBalance(accounts[1]));
+      const balanceDiff1 = (new BN(await web3.eth.getBalance(accounts[1]))).sub(new BN(balance1));
+      const balanceDiff1Exp = -( new BN(ResultBid1.receipt.gasUsed).mul(new BN(gasPrice))).add(new BN(ResultWithdraw1.receipt.gasUsed).mul(new BN(gasPrice)));
+      const balanceDiff2 = (new BN(await web3.eth.getBalance(accounts[2]))).sub(new BN(balance2));
+      const balanceDiff2Exp = -(new BN(minBid + BigInt(1000))).add(  new BN(ResultBid2.receipt.gasUsed).mul(new BN(gasPrice))   ).add(new BN(ResultWithdraw2.receipt.gasUsed).mul(new BN(gasPrice)));
 //TODO work on this condition
-      assert(balanceDiff0 > minBid + BigInt(100), "Account0 should have spent funds on the item");
-      assert(balanceDiff1 < minBid + BigInt(100), "Account1 should have kept his funds except gas");
+      assert.equal(balanceDiff1.toNumber() , balanceDiff1Exp, "Account1 balance is incorrect");
+      assert.equal(balanceDiff2.toNumber(), balanceDiff2Exp, "Account2 balance is incorrect");
     });
 });
