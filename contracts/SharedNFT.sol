@@ -30,7 +30,7 @@ contract SharedNFT is ERC165, ISharedNFT {
     // Auction parameter. Fixes min delay block for Auctions triggered by NFT owners
     uint private _minDelayBlock;
 //TODO uint or not ? 1000000
-    uint public _commision;
+    uint public _commission;
     uint public precision = 10000;
 
     // Mapping from token ID to owners
@@ -46,14 +46,14 @@ contract SharedNFT is ERC165, ISharedNFT {
     /**
      * @dev Initializes the contract by setting a `name`, a `symbol` and a 'minDelayBlock_' to the token collection.
      */
-    constructor(string memory name_, string memory symbol_, string memory uriBase_, uint minDelayBlock_, uint commision_) {
-        require(_commision < precision);
+    constructor(string memory name_, string memory symbol_, string memory uriBase_, uint minDelayBlock_, uint commission) {
+        require(_commission < precision);
         _name = name_;
         _symbol = symbol_;
         _uriBase = uriBase_;
         _minDelayBlock = minDelayBlock_;
         _artist = payable(msg.sender); 
-        _commision = commision_;
+        _commission = commission;
     }
 
     /**
@@ -118,19 +118,15 @@ contract SharedNFT is ERC165, ISharedNFT {
     }
 
     /**
-     * @dev Mints `tokenId` and transfers it to `to`.
+     * @dev Mints `tokenId`.
      *
      * Requirements:
      *
      * - `tokenId` must not exist.
-     * - `to` cannot be the zero address.
-     *
-     * Emits a {Transfer} event.
      */
-     //TODO mint with 
-    function mint(address payable to, uint256 tokenId) public {
-        require(to != address(0), "ERC721: mint to the zero address");
-        require(!_exists(tokenId), "ERC721: token already minted");
+    function mint(uint256 tokenId) public {
+        require(_artist == msg.sender, "Only artist can mint");
+        require(!_exists(tokenId), "Token already minted");
         _owners[tokenId] = to;
         emit Transfer(address(0), to, tokenId);
     }
@@ -185,10 +181,10 @@ contract SharedNFT is ERC165, ISharedNFT {
 
         //Not checking for overflow as commision is limited by precision and total amount of ether is under 
         // 10^9
-        uint amount_commision = (amount * _commision)/precision;
+        uint amount_commission = (amount * _commission)/precision;
 
-        _artist.transfer(amount_commision);
-        owner.transfer(amount - amount_commision);
+        _artist.transfer(amount_commission);
+        owner.transfer(amount - amount_commission);
     }
 }
 

@@ -21,6 +21,7 @@ contract('SharedNFT', (accounts) => {
     const minAuctionBlocks = 3;
     const minPrice = 1000;
     const commision = 2000;
+    const precision = 10000;
   
 
     beforeEach(async () => {
@@ -40,6 +41,8 @@ contract('SharedNFT', (accounts) => {
     it('Check NFT name', async () => {
       const nameNFTActual = await sharedNFTInstance.name();
       assert.equal(nameNFTActual, nameNFT, "NFT name is incorrect");
+      console.log("Version WEB3");
+      console.log(web3.version);
     });
 
     it('Check NFT symbol', async () => {
@@ -110,14 +113,6 @@ contract('SharedNFT', (accounts) => {
 
         let simleAuctionInstance = await SimpleAuction.at(simleAuctionAddress);
         const resultBid = await simleAuctionInstance.bid({value : bid, from : accounts[2]}); 
-      
-
- // Obtain gasPrice from the transaction
- const tx = await web3.eth.getTransaction(resultBid.tx);
- const gasPriceBid = tx.gasPrice;
- console.log(`gasPriceBid: ${gasPriceBid}`);
- console.log("gasPrice web3: " + web3.eth.gasPrice);
-
 
         let blockBeforeClose = await web3.eth.getBlock("latest")
 
@@ -150,16 +145,14 @@ contract('SharedNFT', (accounts) => {
         //check balances
         artist_balance_diff  = (new BN(await web3.eth.getBalance(accounts[0]))).sub(artist_balance);
 
-        artist_balance_diff_exp = bid * (commision/10000); // TODO make precision var
+        artist_balance_diff_exp = bid * (commision/precision);
         acc_1_diff = (new BN(await web3.eth.getBalance(accounts[1]))).sub(new BN(balance1));
-        acc_1_diff_exp = bid * (1 - commision/10000);  
+        acc_1_diff_exp = bid * (1 - commision/precision);  
         
         acc_2_diff = (new BN(await web3.eth.getBalance(accounts[2]))).sub(new BN(balance2));
-        console.log("gas used");
-        console.log(resultBid.receipt.gasUsed);
-        acc_2_diff_exp = - (new BN(bid)).sub( (new BN(gasPriceBid)).mul((new BN(resultBid.receipt.gasUsed))) );
+        acc_2_diff_exp = - (new BN(bid)).add( await common.fundsTx(resultBid));
         assert.equal(artist_balance_diff, artist_balance_diff_exp, "Artist didn't recieve correct amount");
         assert.equal(acc_1_diff, acc_1_diff_exp, "Account 1, owner of the NFT, has an incorrect balance after sale even");
         assert.equal(acc_2_diff.toNumber(), acc_2_diff_exp, "Account 2, buyer of the NFT, has an incorrect balance after purchase even");
-      });
+  });
 });
