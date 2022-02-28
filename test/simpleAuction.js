@@ -2,7 +2,7 @@ const SimpleAuction = artifacts.require("SimpleAuction");
 const MockedSharedNFT = artifacts.require("MockedSharedNFT");
 const truffleAssert = require('truffle-assertions');
 const util = require('util');
-const commmon = require('./common/common');
+const common = require('./common/common');
 const BN = require('bn.js');
   
 contract('SimpleAuction', (accounts) => {
@@ -79,14 +79,14 @@ contract('SimpleAuction', (accounts) => {
     it('Check unsuccesfull close', async () => {
       await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
       const blockBeforeClose = await web3.eth.getBlock("latest");
-      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
+      common.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number - 1);
       await truffleAssert.reverts(simpleAuctionInstance.close());
     });
 
     it('Check close with less than min allowed bid', async () => {
       await simpleAuctionInstance.bid({value : new BN(minBid/BigInt(2)), from : accounts[0]});
       const blockBeforeClose = await web3.eth.getBlock("latest")
-      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
+      common.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       
       const resultClose = await simpleAuctionInstance.close();
  
@@ -104,7 +104,7 @@ contract('SimpleAuction', (accounts) => {
     it('Check close', async () => {
       await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[0]});
       const blockBeforeClose = await web3.eth.getBlock("latest")
-      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
+      common.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       
       const resultClose = await simpleAuctionInstance.close();
  
@@ -118,31 +118,27 @@ contract('SimpleAuction', (accounts) => {
       assert(transferInCloseTx, "Transfer event has to be emitted during close transaction");
     });
 
-    //available only after bid
     it('Check withdrawal', async () => {
       const balance1 = await web3.eth.getBalance(accounts[1]);
       const balance2 = await web3.eth.getBalance(accounts[2]);
+      const bid1 = new BN(minBid + BigInt(100));
+      const bid2 = new BN(minBid + BigInt(1000));
 
-      ResultBid1 = await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(100)), from : accounts[1]});
-      ResultBid2 = await simpleAuctionInstance.bid({value : new BN(minBid + BigInt(1000)), from : accounts[2]});
+      ResultBid1 = await simpleAuctionInstance.bid({value : bid1, from : accounts[1]});
+      ResultBid2 = await simpleAuctionInstance.bid({value : bid2, from : accounts[2]});
 
-      console.log(ResultBid1.receipt.gasUsed);
-      const tx = await web3.eth.getTransaction(ResultBid1.tx);
-      const gasPrice = tx.gasPrice;
-
-
-//todo get gas funds function ?
       const blockBeforeClose = await web3.eth.getBlock("latest");
-      commmon.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
+      common.mineBlocks(delayBlocks - blockBeforeClose.number + blockAfterAuctionConstr.number);
       await debug(simpleAuctionInstance.close());
       ResultWithdraw1 = await simpleAuctionInstance.withdraw({from : accounts[1]});
       ResultWithdraw2 = await simpleAuctionInstance.withdraw({from : accounts[2]});
 
       const balanceDiff1 = (new BN(await web3.eth.getBalance(accounts[1]))).sub(new BN(balance1));
-      const balanceDiff1Exp = -( new BN(ResultBid1.receipt.gasUsed).mul(new BN(gasPrice))).add(new BN(ResultWithdraw1.receipt.gasUsed).mul(new BN(gasPrice)));
+     
+      const balanceDiff1Exp = -(await common.fundsTx(ResultBid1)).add( await common.fundsTx(ResultWithdraw1));
+       
       const balanceDiff2 = (new BN(await web3.eth.getBalance(accounts[2]))).sub(new BN(balance2));
-      const balanceDiff2Exp = -(new BN(minBid + BigInt(1000))).add(  new BN(ResultBid2.receipt.gasUsed).mul(new BN(gasPrice))   ).add(new BN(ResultWithdraw2.receipt.gasUsed).mul(new BN(gasPrice)));
-//TODO work on this condition
+      const balanceDiff2Exp = -(bid2).add( await common.fundsTx(ResultBid2)).add( await common.fundsTx(ResultWithdraw2));
       assert.equal(balanceDiff1.toNumber() , balanceDiff1Exp, "Account1 balance is incorrect");
       assert.equal(balanceDiff2.toNumber(), balanceDiff2Exp, "Account2 balance is incorrect");
     });
