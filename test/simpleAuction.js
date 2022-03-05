@@ -1,5 +1,5 @@
 const SimpleAuction = artifacts.require("SimpleAuction");
-const MockedSharedNFT = artifacts.require("MockedSharedNFT");
+const MockedMandatoryRoyaltyNFT = artifacts.require("MockedMandatoryRoyaltyNFT");
 const truffleAssert = require('truffle-assertions');
 const util = require('util');
 const common = require('./common/common');
@@ -15,9 +15,9 @@ contract('SimpleAuction', (accounts) => {
     const minBid = BigInt(Math.pow(10, 15));
 
     beforeEach(async () => {
-      mockedSharedNFTInstance = await MockedSharedNFT.new();
+      mockedMandatoryRoyaltyNFTInstance = await MockedMandatoryRoyaltyNFT.new();
       blockSimpleAuction = (await web3.eth.getBlock("latest")).number;
-      simpleAuctionInstance = await SimpleAuction.new(tokenId, mockedSharedNFTInstance.address, delayBlocks, minBid);
+      simpleAuctionInstance = await SimpleAuction.new(tokenId, mockedMandatoryRoyaltyNFTInstance.address, delayBlocks, minBid);
       blockAfterAuctionConstr = await web3.eth.getBlock("latest")
     });
 
@@ -28,7 +28,7 @@ contract('SimpleAuction', (accounts) => {
 
     it('Check NFT contract', async () => {
       nftContractActual = await simpleAuctionInstance._nftContract();
-      assert.equal(nftContractActual, mockedSharedNFTInstance.address, "NFT contract address is wrong");
+      assert.equal(nftContractActual, mockedMandatoryRoyaltyNFTInstance.address, "NFT contract address is wrong");
     });
 
     it('Check delayBlocks', async () => {
@@ -91,7 +91,7 @@ contract('SimpleAuction', (accounts) => {
       const resultClose = await simpleAuctionInstance.close();
  
       //todo make a function
-      TransferEvents = await mockedSharedNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
+      TransferEvents = await mockedMandatoryRoyaltyNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
       const transferInCloseTx = false;
       for (const tevent of TransferEvents) {
         if (tevent.transactionHash == resultClose.tx) {
@@ -108,7 +108,7 @@ contract('SimpleAuction', (accounts) => {
       
       const resultClose = await simpleAuctionInstance.close();
  
-      TransferEvents = await mockedSharedNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
+      TransferEvents = await mockedMandatoryRoyaltyNFTInstance.getPastEvents( 'Transfer', { fromBlock: 0, toBlock: 'latest' } );
       let transferInCloseTx = false;
       for (const tevent of TransferEvents) {
         if (tevent.transactionHash == resultClose.tx) {

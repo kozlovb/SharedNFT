@@ -1,4 +1,4 @@
-# SharedNFT
+# MandatoryRoyaltyNFT
 
 ## Overview
 

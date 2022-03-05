@@ -1,5 +1,5 @@
 pragma solidity ^0.8.0;
-import './ISharedNFT.sol';
+import './IMandatoryRoyaltyNFT.sol';
 contract SimpleAuction {
 
 uint public _auctionEndBlock;
@@ -43,7 +43,7 @@ function close() public {
     if (_winner != address(0) && _maxBid > _minPrice) {
         //TODO rethink this condition
        _bids[_winner] = 0;
-       ISharedNFT(_nftContract).transferTo{value: _maxBid}(_winner);
+       IMandatoryRoyaltyNFT(_nftContract).transferTo{value: _maxBid}(_winner);
     }
     closed = true;
 }

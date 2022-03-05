@@ -1,5 +1,5 @@
-const SharedNFT = artifacts.require("SharedNFT");
+const mandatoryRoyaltyNFT = artifacts.require("MandatoryRoyaltyNFT");
 
 module.exports = function(deployer) {
-  deployer.deploy(SharedNFT, "Name", "Symbol", "https://mytest/", 2, 100);
+  deployer.deploy(mandatoryRoyaltyNFT, "Name", "Symbol", "https://mytest/", 2, 100);
 };
