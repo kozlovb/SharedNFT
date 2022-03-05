@@ -124,10 +124,10 @@ contract SharedNFT is ERC165, ISharedNFT {
      *
      * - `tokenId` must not exist.
      */
-    function mint(uint256 tokenId) public {
-        require(_artist == msg.sender, "Only artist can mint");
+    function mint(address to, uint256 tokenId) public {
+        require(_artist == msg.sender, "Only the artist can mint");
         require(!_exists(tokenId), "Token already minted");
-        _owners[tokenId] = to;
+        _owners[tokenId] = payable(to);
         emit Transfer(address(0), to, tokenId);
     }
 
