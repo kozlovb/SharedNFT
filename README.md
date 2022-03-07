@@ -2,13 +2,12 @@
 
 ## Overview
 
-Let's consider a case where an NFT creator wishes to be able to get a commission from every sale of an NFT for a certain period of time.
+Let's consider a case where an NFT creator wishes to get a commission from every sale of an NFT for a certain period of time.
 This cannot be enforced by the current standard ERC721.
 Indeed, the "EIP-2981: NFT Royalty Standard" - a royalty extension of ERC721 has a method that might be called or not by a marketplace. 
 Currently, main marketplaces are supporting these functions, but this is different from having a mandatory commission sent to an artist or a group of. One cannot exclude the appearance of "pirate" marketplaces ignoring this interface or over-the-counter sales. 
-This might become a more important concern in the future, when NFT's would represent more assets than in present.
 
-This project aims to adresse this issue by developing a new NFT like interface and providing an example of its implemtation.
+This project aims to adresse this issue by developing a new NFT interface and providing an example of its implemtation.
 
 ## Architecture choice
 
@@ -29,7 +28,7 @@ For example, if an artist would like to receive an X of funds each time an NFT c
 This fixed fee mechanism serves only a very limited amount of use cases. In case if artist would like to receive a percentage of funds paid for a transfer, a malicious marketplace may create a smart contract that calls a transfer without sending any funds prior to calling the transfer function. 
 
 There are other options like giving certain rights to the artist - to accept or reject a call of replace_owner.
-But this in turn would open a complicated consensus issues like - an artist blocking sales at will and becoming at the end a third negotiating party with the veto right.
+But this in turn would open a complicated consensus issues - an artist blocking sales at will and becoming at the end a third negotiating party with the veto right.
 
 ### Different approach
 
@@ -43,14 +42,6 @@ The auction contract initiated by an owner will have a predefined auction time a
 
 Once there is a foundation that guarantees a commission to an Artist, then various ownership models can be considered. This can be achieved through substituting an owner address by a smart contract or by calling various distribute funds functions upon an end of the successful auction. One can also implement a contract with artist rights expiring at some point, or with an increase or decrease of a commission per each sale.
 
-
-
-### Content description
-
-/... is interfce
-.. tests 
-Interface is described in ...
- 
 ### Prerequistes
 
 # In order to run tests locally 
