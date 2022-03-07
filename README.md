@@ -43,14 +43,6 @@ The auction contract initiated by an owner will have a predefined auction time a
 
 Once there is a foundation that guarantees a commission to an Artist, then various ownership models can be considered. This can be achieved through substituting an owner address by a smart contract or by calling various distribute funds functions upon an end of the successful auction. One can also implement a contract with artist rights expiring at some point, or with an increase or decrease of a commission per each sale.
 
-
-
-### Content description
-
-/... is interfce
-.. tests 
-Interface is described in ...
- 
 ### Prerequistes
 
 # In order to run tests locally 

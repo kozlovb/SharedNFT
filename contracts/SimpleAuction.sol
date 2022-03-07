@@ -1,25 +1,30 @@
 pragma solidity ^0.8.0;
 import './IMandatoryRoyaltyNFT.sol';
+
+/**
+ * @dev Implementation of an Auction Contract triggered by the Mandatory royalty NFT contract.
+ */
 contract SimpleAuction {
 
+address payable public _nftContract;
+address payable public _winner;
+bool _closed = false;
 uint public _auctionEndBlock;
 uint public _minPrice;
-address payable public _winner;
-uint256 public _maxBid;
+uint public _maxBid;
 uint public _tokenId;
-address payable public _nftContract;
 mapping (address => uint) public _bids;
-bool closed = false;
 
-constructor (uint tokenId_, address nftContract_, uint delayBlocks_, uint minPrice) {
-    _tokenId = tokenId_;
-    _nftContract = payable(nftContract_);
-    _auctionEndBlock = block.number + delayBlocks_;
+constructor (uint tokenId, address nftContract, uint delayBlocks, uint minPrice) {
+    _tokenId = tokenId;
+    _nftContract = payable(nftContract);
+    _auctionEndBlock = block.number + delayBlocks;
     _minPrice = minPrice;
 }
 
+// Bid for the token. Compounds with the bid made previously.
 function bid() public payable {
-    require(block.number < _auctionEndBlock && !closed);
+    require(block.number < _auctionEndBlock && !_closed);
     uint new_bid = _bids[msg.sender] + msg.value;
     _bids[msg.sender] = new_bid;
     if (new_bid > _maxBid) {
@@ -30,7 +35,7 @@ function bid() public payable {
 
 /// Withdraw a bid that was overbid.
 function withdraw() public {
-    require(block.number > _auctionEndBlock && closed);
+    require(block.number > _auctionEndBlock && _closed);
     uint bidAmount = _bids[msg.sender];
     if (bidAmount > 0) {
         _bids[msg.sender] = 0;
@@ -38,14 +43,14 @@ function withdraw() public {
     }
 }
 
+//Closes the auction and transfers NFT to the winner.
 function close() public {
-    require(block.number > _auctionEndBlock && !closed);
+    require(block.number > _auctionEndBlock && !_closed);
     if (_winner != address(0) && _maxBid > _minPrice) {
-        //TODO rethink this condition
        _bids[_winner] = 0;
        IMandatoryRoyaltyNFT(_nftContract).transferTo{value: _maxBid}(_winner);
     }
-    closed = true;
+    _closed = true;
 }
 
 }
