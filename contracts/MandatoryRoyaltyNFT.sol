@@ -32,6 +32,8 @@ contract MandatoryRoyaltyNFT is ERC165, IMandatoryRoyaltyNFT {
     // Mapping auction addresses to tokens
     mapping(address => uint) private _auctionToTokens;
 
+    mapping(uint => address) private _tokenToAuction;
+
     address payable public _artist;
 
     string _uriBase;
@@ -137,11 +139,12 @@ contract MandatoryRoyaltyNFT is ERC165, IMandatoryRoyaltyNFT {
     function sell(uint tokenId, uint delayBlock, uint minPrice) public {
 
          require(msg.sender == _owners[tokenId]);
+         require(_tokenToAuction[tokenId] == address(0x0));
          delayBlock = delayBlock > _minDelayBlock ? delayBlock : _minDelayBlock;
          address auction = address(new SimpleAuction(tokenId, address(this), delayBlock, minPrice));
-         emit AuctionStarted(tokenId, auction, delayBlock + block.number);
-
+         _tokenToAuction[tokenId] = auction;
          _auctionToTokens[auction] = tokenId;
+         emit AuctionStarted(tokenId, auction, delayBlock + block.number);
     }
 
     /**
@@ -157,14 +160,15 @@ contract MandatoryRoyaltyNFT is ERC165, IMandatoryRoyaltyNFT {
      * Emits a {Transfer} event.
      */
     function transferTo(address payable to) payable public {
-        uint token_id = _auctionToTokens[msg.sender];
-        require(token_id >= 0);
+        uint tokenId = _auctionToTokens[msg.sender];
+        require(_tokenToAuction[tokenId] != address(0x0) && _tokenToAuction[tokenId] == msg.sender);
         require(to != address(0x0));  
-        address payable previous_owner = _owners[token_id];
+        address payable previous_owner = _owners[tokenId];
         distribute(previous_owner, msg.value);
         
-        _owners[token_id] = to;
-        emit Transfer(previous_owner, to, token_id);
+        _owners[tokenId] = to;
+        _tokenToAuction[tokenId] = address(0x0);
+        emit Transfer(previous_owner, to, tokenId);
     } 
 
     function distribute(address payable owner, uint amount) private {

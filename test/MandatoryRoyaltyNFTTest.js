@@ -84,6 +84,20 @@ contract('MandatoryRoyaltyNFT', (accounts) => {
       assert.equal(endAuctionBlockActual, endAuctionBlockExpected, "Auction event should end at an expeted block")
     })
 
+    it('Cannot sell if auction is not finished', async () => {
+      const minPrice = 1000
+      const result  = await mandatoryRoyaltyNFTInstance.sell(0, 0, minPrice, {from: accounts[1]})
+      const blockAfterSell = await web3.eth.getBlock("latest")
+      const endAuctionBlockExpected = blockAfterSell.number + minAuctionBlocks 
+      let endAuctionBlockActual = 0
+      truffleAssert.eventEmitted(result, 'AuctionStarted', (ev) => {
+          simleAuctionAddress = ev.auctionContract
+          endAuctionBlockActual = ev.endBlock
+          return true
+      }, "Sell Auction notification event has not been emited")
+      await truffleAssert.reverts(mandatoryRoyaltyNFTInstance.sell(0, 0, minPrice + 100, {from: accounts[4]}));
+    })
+
     it('Close an Auction', async () => {
   
         const waitBlocks = 15
